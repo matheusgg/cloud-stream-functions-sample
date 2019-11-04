@@ -1,0 +1,53 @@
+spring:
+  cloud:
+    stream:
+      function:
+        definition: 'simpleConsumer1;simpleConsumer2'
+        # Permite que o roteamento da mensagem seja feito de forma dinamica
+        # Com essa configuração, o framework verificará o header "spring.cloud.function.definition" para determinar qual é a função (consumidor) que deverá ser invocada
+        # spring.cloud.function.definition=simpleConsumer1 ou spring.cloud.function.definition=consumer1
+        # spring.cloud.function.definition=simpleConsumer2 ou spring.cloud.function.definition=consumer2
+        routing:
+          enabled: true
+        bindings:
+          simpleConsumer1-in-0: 'consumer1'
+          simpleConsumer2-in-0: 'consumer2'
+      binders:
+        rabbit:
+          type: 'rabbit'
+          environment:
+            spring:
+              rabbitmq:
+                addresses: 'localhost:5672'
+                username: 'guest'
+                password: 'guest'
+                virtual-host: '/'
+      bindings:
+        consumer1:
+          binder: 'rabbit'
+          group: 'ha_consumer_queue'
+          destination: 'ha_consumer_exchange'
+          consumer:
+            concurrency: 1
+        consumer2:
+          binder: 'rabbit'
+          group: 'ha_consumer_queue'
+          destination: 'ha_consumer_exchange'
+          consumer:
+            concurrency: 1
+      rabbit:
+        bindings:
+          consumer1:
+            consumer:
+              exchange-type: fanout
+              bind-queue: true
+              declare-exchange: true
+              max-concurrency: 1
+              queue-name-group-only: true
+          consumer2:
+            consumer:
+              exchange-type: fanout
+              bind-queue: true
+              declare-exchange: true
+              max-concurrency: 1
+              queue-name-group-only: true

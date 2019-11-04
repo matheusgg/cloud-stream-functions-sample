@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: 'cloud-stream-functions-sample'
+  main:
+    allow-bean-definition-overriding: true
+  aop:
+    proxy-target-class: false
+  cloud:
+    config:
+      override-none: true
+      override-system-properties: false
+  devtools:
+    restart:
+      log-condition-evaluation-delta: false
+  jackson:
+    serialization.write-dates-as-timestamps: false
+  sleuth:
+    messaging:
+      enabled: false
+
+management:
+  health:
+    binders:
+      enabled: true
+
+logging:
+  level:
+    org.springframework.cloud.sleuth: debug

@@ -1,0 +1,74 @@
+spring:
+  cloud:
+    stream:
+      function:
+        definition: 'handleItems;consumeString'
+        routing:
+          enabled: true
+        bindings:
+          handleItems-in-0: 'strings'
+          handleItems-in-1: 'ints'
+          handleItems-out-0: 'result'
+          consumeString-in-0: 'consume_string'
+      binders:
+        rabbit:
+          type: 'rabbit'
+          environment:
+            spring:
+              rabbitmq:
+                addresses: 'localhost:5672'
+                username: 'guest'
+                password: 'guest'
+                virtual-host: '/'
+      bindings:
+        strings:
+          binder: 'rabbit'
+          group: 'ha_strings_queue'
+          destination: 'ha_strings_exchange'
+          consumer:
+            concurrency: 1
+        ints:
+          binder: 'rabbit'
+          group: 'ha_ints_queue'
+          destination: 'ha_ints_exchange'
+          consumer:
+            concurrency: 1
+        result:
+          binder: 'rabbit'
+          group: 'ha_result_queue'
+          destination: 'ha_result_exchange'
+        consume_string:
+          binder: 'rabbit'
+          group: 'ha_result_queue'
+          destination: 'ha_result_exchange'
+          consumer:
+            concurrency: 1
+      rabbit:
+        bindings:
+          strings:
+            consumer:
+              exchange-type: fanout
+              bind-queue: true
+              declare-exchange: true
+              max-concurrency: 1
+              queue-name-group-only: true
+          ints:
+            consumer:
+              exchange-type: fanout
+              bind-queue: true
+              declare-exchange: true
+              max-concurrency: 1
+              queue-name-group-only: true
+          result:
+            producer:
+              exchange-type: fanout
+              bind-queue: true
+              declare-exchange: true
+              queue-name-group-only: true
+          consume_string:
+            consumer:
+              exchange-type: fanout
+              bind-queue: true
+              declare-exchange: true
+              max-concurrency: 1
+              queue-name-group-only: true

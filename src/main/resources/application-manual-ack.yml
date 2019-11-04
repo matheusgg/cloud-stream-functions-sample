@@ -1,0 +1,34 @@
+spring:
+  cloud:
+    stream:
+      function:
+        definition: 'handleUserManual'
+        bindings:
+          handleUserManual-in-0: 'handle_user_manual'
+      binders:
+        rabbit:
+          type: 'rabbit'
+          environment:
+            spring:
+              rabbitmq:
+                addresses: 'localhost:5672'
+                username: 'guest'
+                password: 'guest'
+                virtual-host: '/'
+      bindings:
+        handle_user_manual:
+          binder: 'rabbit'
+          group: 'ha_users_manual_queue'
+          destination: 'ha_users_manual_exchange'
+          consumer:
+            concurrency: 1
+      rabbit:
+        bindings:
+          handle_user_manual:
+            consumer:
+              exchange-type: fanout
+              bind-queue: true
+              declare-exchange: true
+              max-concurrency: 1
+              queue-name-group-only: true
+              acknowledge-mode: MANUAL

@@ -1,0 +1,65 @@
+spring:
+  cloud:
+    stream:
+      function:
+        # Quando existe mais do que 1 handle é preciso especificar para o cloud stream para qual deles será feito o bind.
+        # Com a propriedade "definition" é possível fazer agregações (|) ou declarar múltiplos handles (;)
+        # É possível mesclar a declaração de de funções compostas com funções simples que representam handles diferentes
+        definition: 'trim|toUpperCase;consumeString'
+        routing:
+          enabled: true
+        # É possível definir um "alias" para os bindings que podem ser referenciados a partir desses novos nomes
+        bindings:
+          '[trim|toUpperCase-in-0]': 'old'
+          '[trim|toUpperCase-out-0]': 'new'
+          consumeString-in-0: 'consume_string'
+      binders:
+        rabbit:
+          type: 'rabbit'
+          environment:
+            spring:
+              rabbitmq:
+                addresses: 'localhost:5672'
+                username: 'guest'
+                password: 'guest'
+                virtual-host: '/'
+      bindings:
+        # O padrão de nomenclatura é <functionName>-<in|out>-<index>
+        old:
+          binder: 'rabbit'
+          group: 'ha_old_string_queue'
+          destination: 'ha_old_string_exchange'
+          consumer:
+            concurrency: 1
+        new:
+          binder: 'rabbit'
+          group: 'ha_new_string_queue'
+          destination: 'ha_new_string_exchange'
+        consume_string:
+          binder: 'rabbit'
+          group: 'ha_new_string_queue'
+          destination: 'ha_new_string_exchange'
+          consumer:
+            concurrency: 1
+      rabbit:
+        bindings:
+          old:
+            consumer:
+              exchange-type: fanout
+              bind-queue: true
+              declare-exchange: true
+              max-concurrency: 1
+              queue-name-group-only: true
+          new:
+            producer:
+              exchange-type: fanout
+              bind-queue: true
+              declare-exchange: true
+              queue-name-group-only: true
+          consume_string:
+            consumer:
+              exchange-type: fanout
+              bind-queue: true
+              declare-exchange: true
+              max-concurrency: 1
+              queue-name-group-only: true

@@ -1,0 +1,63 @@
+spring:
+  cloud:
+    stream:
+      function:
+        # Quando existe mais do que 1 handle é preciso especificar para o cloud stream para qual deles será feito o bind.
+        # Com a propriedade "definition" é possível fazer agregações (|) ou declarar múltiplos handles (;)
+        definition: 'handleUser;handleProduct'
+      binders:
+        rabbit:
+          type: 'rabbit'
+          environment:
+            spring:
+              rabbitmq:
+                addresses: 'localhost:5672'
+                username: 'guest'
+                password: 'guest'
+                virtual-host: '/'
+      bindings:
+        # O padrão de nomenclatura é <functionName>-<in|out>-<index>
+        handleUser-in-0:
+          binder: 'rabbit'
+          group: 'ha_user_creation_queue'
+          destination: 'ha_user_creation_exchange'
+          consumer:
+            concurrency: 1
+        handleProduct-in-0:
+          binder: 'rabbit'
+          group: 'ha_product_creation_queue'
+          destination: 'ha_product_creation_exchange'
+          consumer:
+            concurrency: 1
+      rabbit:
+        bindings:
+          handleUser-in-0:
+            consumer:
+              exchange-type: fanout
+              bind-queue: true
+              declare-exchange: true
+              max-concurrency: 1
+              queue-name-group-only: true
+              auto-bind-dlq: true
+              republish-to-dlq: true
+              declare-dlx: true
+              dead-letter-queue-name: 'ha_user_creation_dlq'
+              dead-letter-routing-key: 'ha_user_creation_dlq'
+              dead-letter-exchange: 'ha_user_recoverer_exchange'
+              dlq-dead-letter-routing-key: 'ha_user_creation_dlq'
+              dlq-dead-letter-exchange: 'ha_user_recoverer_exchange'
+          handleProduct-in-0:
+            consumer:
+              exchange-type: fanout
+              bind-queue: true
+              declare-exchange: true
+              max-concurrency: 1
+              queue-name-group-only: true
+              auto-bind-dlq: true
+              republish-to-dlq: true
+              declare-dlx: true
+              dead-letter-queue-name: 'ha_product_creation_dlq'
+              dead-letter-routing-key: 'ha_product_creation_dlq'
+              dead-letter-exchange: 'ha_product_recoverer_exchange'
+              dlq-dead-letter-routing-key: 'ha_product_creation_dlq'
+              dlq-dead-letter-exchange: 'ha_product_recoverer_exchange'

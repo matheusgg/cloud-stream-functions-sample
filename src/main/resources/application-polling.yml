@@ -1,0 +1,48 @@
+spring:
+  cloud:
+    stream:
+      function:
+        definition: 'stringSupplier;consumeString'
+        bindings:
+          stringSupplier-out-0: 'string_supplier'
+          consumeString-in-0: 'consume_string'
+      # Configuração de polling. Dessa forma 1 mensagem será gerada pela função "stringSupplier" a cada segundo
+      poller:
+        fixed-delay: 1000
+        max-messages-per-poll: 1
+      binders:
+        rabbit:
+          type: 'rabbit'
+          environment:
+            spring:
+              rabbitmq:
+                addresses: 'localhost:5672'
+                username: 'guest'
+                password: 'guest'
+                virtual-host: '/'
+      bindings:
+        string_supplier:
+          binder: 'rabbit'
+          group: 'ha_string_supplier_queue'
+          destination: 'ha_string_supplier_exchange'
+        consume_string:
+          binder: 'rabbit'
+          group: 'ha_string_supplier_queue'
+          destination: 'ha_string_supplier_exchange'
+          consumer:
+            concurrency: 1
+      rabbit:
+        bindings:
+          string_supplier:
+            producer:
+              exchange-type: fanout
+              bind-queue: true
+              declare-exchange: true
+              queue-name-group-only: true
+          consume_string:
+            consumer:
+              exchange-type: fanout
+              bind-queue: true
+              declare-exchange: true
+              max-concurrency: 1
+              queue-name-group-only: true
